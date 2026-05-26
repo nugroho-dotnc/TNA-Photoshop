@@ -1,0 +1,46 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# FastAPI / server logs
+*.log
+logs/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Runtime/session output
+tmp/
+temp/
+sessions/
+mini-photoshop/
+
+# ML datasets and generated training outputs
+dataset/
+datasets/
+runs/
+*.keras
+*.h5
+*.pt
+*.onnx
+
+# Keep model directory structure if needed
+!models/.gitkeep

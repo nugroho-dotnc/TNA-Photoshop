@@ -1,0 +1,140 @@
+"""
+routers/compression.py
+─────────────────────────────────────────────────────────────────────────────
+Image compression endpoints:
+  POST /compression/{session_id}/save-quality
+  POST /compression/{session_id}/simulate-jpeg
+"""
+
+import io
+
+import cv2
+import numpy as np
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, field_validator
+from typing import Literal
+
+from services import session_service as ss
+
+router = APIRouter()
+
+
+def _std(session_id: str, step: int, msg: str = "Operation applied successfully.", **extra) -> dict:
+    return {
+        "success": True,
+        "session_id": session_id,
+        "current_url": f"/sessions/{session_id}/current",
+        "step": step,
+        "message": msg,
+        **extra,
+    }
+
+
+# ─── Save Quality ─────────────────────────────────────────────────────────────
+
+class SaveQualityBody(BaseModel):
+    quality: int   # 1–100
+    format: Literal["jpeg", "png"] = "jpeg"
+
+    @field_validator("quality")
+    @classmethod
+    def validate_quality(cls, v: int) -> int:
+        if not 1 <= v <= 100:
+            raise ValueError("quality must be between 1 and 100.")
+        return v
+
+
+@router.post("/compression/{session_id}/save-quality")
+def save_quality(session_id: str, body: SaveQualityBody):
+    try:
+        img = ss.read_current(session_id)
+
+        _, original_buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        original_size_kb = round(len(original_buf) / 1024, 2)
+
+        if body.format == "jpeg":
+            encode_param = [cv2.IMWRITE_JPEG_QUALITY, body.quality]
+            ext = ".jpg"
+        else:  # png
+            # PNG compression: 0 (none) to 9 (max) — map quality 1–100 to 9–0
+            png_compression = max(0, min(9, int((100 - body.quality) / 11)))
+            encode_param = [cv2.IMWRITE_PNG_COMPRESSION, png_compression]
+            ext = ".png"
+
+        _, compressed_buf = cv2.imencode(ext, img, encode_param)
+        compressed_size_kb = round(len(compressed_buf) / 1024, 2)
+        ratio = round(original_size_kb / compressed_size_kb, 2) if compressed_size_kb > 0 else 0
+
+        # Write re-decoded image as new step
+        decoded = cv2.imdecode(compressed_buf, cv2.IMREAD_COLOR)
+        step = ss.save_step(
+            session_id,
+            decoded,
+            "Save Quality",
+            {"quality": body.quality, "format": body.format},
+        )
+
+        return _std(
+            session_id,
+            step,
+            f"Saved with quality={body.quality} ({body.format}).",
+            original_size_kb=original_size_kb,
+            compressed_size_kb=compressed_size_kb,
+            ratio=ratio,
+            method=body.format.upper(),
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ─── Simulate JPEG Compression ────────────────────────────────────────────────
+
+class SimulateJpegBody(BaseModel):
+    quality: int  # 1–100
+
+    @field_validator("quality")
+    @classmethod
+    def validate_quality(cls, v: int) -> int:
+        if not 1 <= v <= 100:
+            raise ValueError("quality must be between 1 and 100.")
+        return v
+
+
+@router.post("/compression/{session_id}/simulate-jpeg")
+def simulate_jpeg(session_id: str, body: SimulateJpegBody):
+    """Simulate JPEG compression artifacts via encode→decode round-trip."""
+    try:
+        img = ss.read_current(session_id)
+
+        # Original size at 100% quality
+        _, orig_buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, 100])
+        original_size_kb = round(len(orig_buf) / 1024, 2)
+
+        # Compressed via requested quality
+        _, comp_buf = cv2.imencode(".jpg", img, [cv2.IMWRITE_JPEG_QUALITY, body.quality])
+        compressed_size_kb = round(len(comp_buf) / 1024, 2)
+        ratio = round(original_size_kb / compressed_size_kb, 2) if compressed_size_kb > 0 else 0
+
+        # Decode compressed image back to show artifacts
+        decoded = cv2.imdecode(comp_buf, cv2.IMREAD_COLOR)
+        step = ss.save_step(
+            session_id,
+            decoded,
+            "Simulate JPEG",
+            {"quality": body.quality},
+        )
+
+        return _std(
+            session_id,
+            step,
+            f"JPEG simulation at quality={body.quality} applied.",
+            original_size_kb=original_size_kb,
+            compressed_size_kb=compressed_size_kb,
+            ratio=ratio,
+        )
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
