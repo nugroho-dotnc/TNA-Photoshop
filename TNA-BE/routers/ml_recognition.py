@@ -15,7 +15,10 @@ router = APIRouter()
 
 @router.post("/ml/{session_id}/recognize")
 def recognize(session_id: str):
-    """Run CNN inference on the current session image."""
+    """
+    Melakukan pengenalan objek pada citra current menggunakan model CNN.
+    Endpoint ini menerapkan klasifikasi citra sebagai bagian dari analisis visual berbasis fitur belajar.
+    """
     try:
         img = ss.read_current(session_id)
         result = ml_service.predict(img)

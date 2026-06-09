@@ -20,6 +20,7 @@ router = APIRouter()
 
 
 def _std(session_id: str, step: int, msg: str = "Operation applied successfully.") -> dict:
+    """Membentuk response standar setelah operasi pemrosesan warna citra."""
     return {
         "success": True,
         "session_id": session_id,
@@ -33,6 +34,10 @@ def _std(session_id: str, step: int, msg: str = "Operation applied successfully.
 
 @router.post("/color/{session_id}/to-grayscale")
 def to_grayscale(session_id: str):
+    """
+    Mengonversi citra warna BGR ke grayscale berdasarkan informasi luminance.
+    Hasil dibuat tiga kanal kembali agar kompatibel dengan pipeline penyimpanan citra.
+    """
     try:
         img = ss.read_current(session_id)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -53,6 +58,10 @@ class SplitChannelBody(BaseModel):
 
 @router.post("/color/{session_id}/split-channels")
 def split_channels(session_id: str, body: SplitChannelBody):
+    """
+    Memisahkan kanal warna RGB untuk menganalisis kontribusi tiap komponen warna.
+    Kanal yang tidak dipilih diatur nol sehingga hanya kanal target yang terlihat.
+    """
     try:
         img = ss.read_current(session_id)
         result = np.zeros_like(img)
@@ -79,6 +88,7 @@ class HueSatBody(BaseModel):
     @field_validator("hue_shift")
     @classmethod
     def validate_hue(cls, v: int) -> int:
+        """Memvalidasi besar pergeseran hue dalam ruang warna HSV."""
         if not -180 <= v <= 180:
             raise ValueError("hue_shift must be between -180 and 180.")
         return v
@@ -86,6 +96,7 @@ class HueSatBody(BaseModel):
     @field_validator("saturation_scale")
     @classmethod
     def validate_sat(cls, v: float) -> float:
+        """Memvalidasi faktor skala saturasi dalam ruang warna HSV."""
         if not 0.0 <= v <= 3.0:
             raise ValueError("saturation_scale must be between 0.0 and 3.0.")
         return v
@@ -93,6 +104,10 @@ class HueSatBody(BaseModel):
 
 @router.post("/color/{session_id}/adjust-hue-saturation")
 def adjust_hue_saturation(session_id: str, body: HueSatBody):
+    """
+    Menyesuaikan hue dan saturasi citra melalui transformasi ruang warna HSV.
+    Hue mengubah rona warna, sedangkan saturasi mengatur kemurnian warna.
+    """
     try:
         img = ss.read_current(session_id)
         hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.float32)
@@ -125,7 +140,7 @@ def adjust_hue_saturation(session_id: str, body: HueSatBody):
 
 @router.get("/color/{session_id}/channel-preview")
 def channel_preview(session_id: str, channel: Literal["R", "G", "B"]):
-    """Return a read-only channel preview without mutating session history."""
+    """Menyediakan preview analisis kanal warna tanpa menyimpan perubahan ke history."""
     try:
         img = ss.read_current(session_id)
         result = np.zeros_like(img)

@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 def _std(session_id: str, step: int, msg: str = "Operation applied successfully.") -> dict:
+    """Membentuk response standar setelah operasi restorasi atau reduksi noise."""
     return {
         "success": True,
         "session_id": session_id,
@@ -37,6 +38,7 @@ class GaussianBlurBody(BaseModel):
     @field_validator("kernel_size")
     @classmethod
     def must_be_odd(cls, v: int) -> int:
+        """Memvalidasi ukuran kernel Gaussian agar positif dan ganjil."""
         if v < 1 or v % 2 == 0:
             raise ValueError("kernel_size must be a positive odd integer.")
         return v
@@ -44,6 +46,10 @@ class GaussianBlurBody(BaseModel):
 
 @router.post("/restoration/{session_id}/gaussian-blur")
 def gaussian_blur(session_id: str, body: GaussianBlurBody):
+    """
+    Menerapkan Gaussian blur untuk mereduksi noise dengan pembobotan distribusi normal.
+    Parameter sigma mengontrol tingkat penyebaran filter pada area ketetanggaan piksel.
+    """
     try:
         img = ss.read_current(session_id)
         result = cv2.GaussianBlur(img, (body.kernel_size, body.kernel_size), body.sigma)
@@ -68,6 +74,7 @@ class MedianFilterBody(BaseModel):
     @field_validator("kernel_size")
     @classmethod
     def must_be_odd(cls, v: int) -> int:
+        """Memvalidasi ukuran jendela median filter agar positif dan ganjil."""
         if v < 1 or v % 2 == 0:
             raise ValueError("kernel_size must be a positive odd integer.")
         return v
@@ -75,6 +82,10 @@ class MedianFilterBody(BaseModel):
 
 @router.post("/restoration/{session_id}/median-filter")
 def median_filter(session_id: str, body: MedianFilterBody):
+    """
+    Menerapkan median filter untuk mengurangi noise impuls seperti salt-and-pepper.
+    Nilai piksel diganti dengan median dari lingkungan lokal sehingga tepi relatif terjaga.
+    """
     try:
         img = ss.read_current(session_id)
         result = cv2.medianBlur(img, body.kernel_size)
@@ -100,19 +111,24 @@ class NoiseRemovalBody(BaseModel):
     @field_validator("strength")
     @classmethod
     def validate_strength(cls, v: int) -> int:
+        """Memvalidasi tingkat kekuatan reduksi noise yang dipetakan ke ukuran kernel."""
         if v < 1 or v > 10:
             raise ValueError("strength must be between 1 and 10.")
         return v
 
 
 def _strength_to_kernel(strength: int) -> int:
-    """Map 1–10 strength to an odd kernel size (3–21)."""
+    """Mengubah parameter strength menjadi ukuran kernel ganjil untuk median blur."""
     k = 1 + strength * 2
     return k if k % 2 == 1 else k + 1
 
 
 @router.post("/restoration/{session_id}/noise-removal")
 def noise_removal(session_id: str, body: NoiseRemovalBody):
+    """
+    Mengurangi noise citra menggunakan median blur berbasis ukuran kernel adaptif.
+    Pendekatan ini cocok untuk noise impuls karena tidak menghitung rata-rata intensitas.
+    """
     try:
         img = ss.read_current(session_id)
         kernel = _strength_to_kernel(body.strength)

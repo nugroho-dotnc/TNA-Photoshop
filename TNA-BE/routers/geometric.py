@@ -21,6 +21,7 @@ router = APIRouter()
 
 
 def _std(session_id: str, step: int, msg: str = "Operation applied successfully.") -> dict:
+    """Membentuk response standar setelah transformasi geometrik citra."""
     return {
         "success": True,
         "session_id": session_id,
@@ -39,6 +40,10 @@ class RotateBody(BaseModel):
 
 @router.post("/geometric/{session_id}/rotate")
 def rotate(session_id: str, body: RotateBody):
+    """
+    Melakukan rotasi citra menggunakan transformasi affine terhadap pusat gambar.
+    Opsi expand menjaga seluruh area citra hasil rotasi agar tidak terpotong.
+    """
     try:
         img = ss.read_current(session_id)
         h, w = img.shape[:2]
@@ -77,6 +82,7 @@ class FlipBody(BaseModel):
 
 @router.post("/geometric/{session_id}/flip")
 def flip(session_id: str, body: FlipBody):
+    """Melakukan pencerminan citra terhadap sumbu horizontal atau vertikal."""
     try:
         img = ss.read_current(session_id)
         flip_code = 1 if body.direction == "horizontal" else 0
@@ -105,6 +111,7 @@ class CropBody(BaseModel):
     @field_validator("width", "height")
     @classmethod
     def must_be_positive(cls, v: int) -> int:
+        """Memvalidasi dimensi area crop agar bernilai positif."""
         if v <= 0:
             raise ValueError("width and height must be positive integers.")
         return v
@@ -112,6 +119,10 @@ class CropBody(BaseModel):
 
 @router.post("/geometric/{session_id}/crop")
 def crop(session_id: str, body: CropBody):
+    """
+    Melakukan cropping dengan mengambil subset matriks piksel berdasarkan koordinat ROI.
+    Operasi ini membatasi citra pada area region of interest yang ditentukan.
+    """
     try:
         img = ss.read_current(session_id)
         h, w = img.shape[:2]
@@ -151,6 +162,7 @@ class ResizeBody(BaseModel):
     @field_validator("width", "height")
     @classmethod
     def must_be_positive(cls, v: int) -> int:
+        """Memvalidasi dimensi hasil resize agar bernilai positif."""
         if v <= 0:
             raise ValueError("width and height must be positive integers.")
         return v
@@ -158,6 +170,10 @@ class ResizeBody(BaseModel):
 
 @router.post("/geometric/{session_id}/resize")
 def resize(session_id: str, body: ResizeBody):
+    """
+    Mengubah resolusi citra menggunakan interpolasi nearest-neighbor atau bilinear.
+    Interpolasi menentukan cara estimasi nilai piksel baru saat skala citra berubah.
+    """
     try:
         img = ss.read_current(session_id)
         interp = cv2.INTER_NEAREST if body.interpolation == "nearest" else cv2.INTER_LINEAR
@@ -188,6 +204,7 @@ class TranslateBody(BaseModel):
 
 @router.post("/geometric/{session_id}/translate")
 def translate(session_id: str, body: TranslateBody):
+    """Melakukan translasi citra menggunakan matriks affine berdasarkan pergeseran x dan y."""
     try:
         img = ss.read_current(session_id)
         h, w = img.shape[:2]

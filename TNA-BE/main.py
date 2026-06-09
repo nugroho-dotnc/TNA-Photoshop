@@ -43,6 +43,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """Menyiapkan resource aplikasi saat startup dan menjalankan teardown saat shutdown."""
     # Startup ──────────────────────────────────────────────────────────────────
     Path(SESSION_DIR).mkdir(parents=True, exist_ok=True)
     logger.info("Session directory ready: %s", SESSION_DIR)
@@ -64,6 +65,8 @@ app = FastAPI(
 )
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
+# Untuk development: allow_origins=["*"] aman selama tidak ada credentials (cookie/auth)
+# Untuk production: ganti dengan domain spesifik, e.g. ["https://yourdomain.com"]
 
 app.add_middleware(
     CORSMiddleware,
@@ -91,4 +94,5 @@ app.include_router(ml_recognition.router,   tags=["ML Recognition"])
 
 @app.get("/", tags=["Health"])
 def root():
+    """Mengembalikan status kesehatan dasar API."""
     return {"status": "ok", "message": "Mini Photoshop API is running."}

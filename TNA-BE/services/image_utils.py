@@ -10,18 +10,7 @@ from pathlib import Path
 
 
 def read_image(path: str) -> np.ndarray:
-    """Read an image from disk into a BGR NumPy array.
-
-    Args:
-        path: Absolute path to the image file.
-
-    Returns:
-        NumPy array in BGR format.
-
-    Raises:
-        FileNotFoundError: If the image does not exist on disk.
-        ValueError: If OpenCV fails to decode the image.
-    """
+    """Membaca citra digital dari media penyimpanan ke representasi matriks BGR."""
     if not Path(path).exists():
         raise FileNotFoundError(f"Image not found: {path}")
 
@@ -33,25 +22,19 @@ def read_image(path: str) -> np.ndarray:
 
 
 def write_image(img: np.ndarray, path: str, quality: int = 95) -> None:
-    """Write a BGR NumPy array to disk as JPEG.
-
-    Args:
-        img:     BGR NumPy array to write.
-        path:    Absolute destination path (should end in .jpg).
-        quality: JPEG quality (1–100).
-    """
+    """Menyimpan matriks citra BGR ke file dengan parameter kualitas kompresi JPEG."""
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     params = [cv2.IMWRITE_JPEG_QUALITY, quality]
     cv2.imwrite(path, img, params)
 
 
 def bgr_to_rgb(img: np.ndarray) -> np.ndarray:
-    """Convert BGR (OpenCV default) to RGB."""
+    """Mengonversi urutan kanal warna dari BGR OpenCV ke RGB standar visualisasi."""
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
 def ensure_bgr(img: np.ndarray) -> np.ndarray:
-    """Ensure the image has 3 channels (convert grayscale → BGR if needed)."""
+    """Menstandarkan citra menjadi tiga kanal BGR agar operasi warna konsisten."""
     if len(img.shape) == 2:
         return cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
     return img

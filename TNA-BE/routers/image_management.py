@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 def _err(error: str, code: str, status: int):
+    """Menaikkan HTTPException dengan format error terstruktur untuk ekspor citra."""
     raise HTTPException(
         status_code=status,
         detail={"success": False, "error": error, "code": code},
@@ -33,6 +34,7 @@ class SaveRequest(BaseModel):
     @field_validator("format")
     @classmethod
     def validate_format(cls, v: str) -> str:
+        """Memvalidasi format file citra yang didukung untuk proses ekspor."""
         allowed = {"jpg", "jpeg", "png", "bmp"}
         if v.lower() not in allowed:
             raise ValueError(f"Format must be one of {allowed}")
@@ -41,6 +43,7 @@ class SaveRequest(BaseModel):
     @field_validator("quality")
     @classmethod
     def validate_quality(cls, v: Optional[int]) -> int:
+        """Memvalidasi kualitas ekspor yang memengaruhi kompresi citra."""
         v = v or 95
         if not 1 <= v <= 100:
             raise ValueError("quality must be between 1 and 100.")
@@ -49,7 +52,10 @@ class SaveRequest(BaseModel):
 
 @router.post("/image/{session_id}/save")
 def save_image(session_id: str, body: SaveRequest):
-    """Export the current image as a downloadable file."""
+    """
+    Mengekspor citra current ke format file yang dipilih.
+    Parameter kualitas digunakan untuk mengontrol kompresi pada format JPEG atau PNG.
+    """
     try:
         img = ss.read_current(session_id)
 

@@ -19,6 +19,7 @@ router = APIRouter()
 
 
 def _std(session_id: str, step: int, msg: str = "Operation applied successfully.") -> dict:
+    """Membentuk response standar setelah operasi segmentasi citra."""
     return {
         "success": True,
         "session_id": session_id,
@@ -37,6 +38,10 @@ class ThreshSegBody(BaseModel):
 
 @router.post("/segmentation/{session_id}/threshold-based")
 def threshold_based(session_id: str, body: ThreshSegBody):
+    """
+    Melakukan segmentasi citra berbasis ambang intensitas pada kanal grayscale.
+    Area hasil threshold ditandai sebagai region of interest melalui overlay warna.
+    """
     try:
         img = ss.read_current(session_id)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -80,6 +85,10 @@ class EdgeSegBody(BaseModel):
 
 @router.post("/segmentation/{session_id}/edge-based")
 def edge_based(session_id: str, body: EdgeSegBody):
+    """
+    Melakukan segmentasi berbasis tepi dengan Canny edge detection dan ekstraksi kontur.
+    Kontur objek divisualisasikan untuk menunjukkan batas region pada citra.
+    """
     try:
         img = ss.read_current(session_id)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -117,6 +126,7 @@ class RegionSegBody(BaseModel):
     @field_validator("num_clusters")
     @classmethod
     def validate_clusters(cls, v: int) -> int:
+        """Memvalidasi jumlah cluster untuk segmentasi region berbasis K-Means."""
         if not 2 <= v <= 8:
             raise ValueError("num_clusters must be between 2 and 8.")
         return v
@@ -124,6 +134,10 @@ class RegionSegBody(BaseModel):
 
 @router.post("/segmentation/{session_id}/region-based")
 def region_based(session_id: str, body: RegionSegBody):
+    """
+    Melakukan segmentasi berbasis region menggunakan algoritma K-Means pada ruang warna BGR.
+    Setiap piksel dikelompokkan ke centroid warna sehingga citra terbagi menjadi beberapa region.
+    """
     try:
         img = ss.read_current(session_id)
         h, w = img.shape[:2]

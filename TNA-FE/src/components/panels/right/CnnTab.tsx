@@ -55,7 +55,7 @@ export default function CnnTab() {
     <div className="flex flex-col gap-4 p-3 overflow-y-auto">
       <div className="bg-surface-2 border border-surface-4 rounded-lg p-3 text-xs flex justify-between">
         <span className="text-text-muted">Model</span>
-        <span className="text-text-primary font-medium">MobileNetV2</span>
+        <span className="text-text-primary font-medium">Custom CNN</span>
       </div>
 
       <button

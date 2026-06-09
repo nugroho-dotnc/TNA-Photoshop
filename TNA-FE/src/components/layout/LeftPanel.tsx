@@ -79,6 +79,10 @@ export default function LeftPanel() {
 
     const fn = actionMap[feat]
     if (fn) {
+      // PENJELASAN ARSITEKTUR: TAHAP 1
+      // Di sini kita melempar fungsi API (misal: applyBrightness) ke dalam custom hook `useApply`.
+      // Tombol Apply ini adalah pemicu tunggal dari serangkaian reaksi berantai (chain reaction)
+      // pemanggilan API di background.
       await apply(fn as () => Promise<{ data: { current_url: string; step: number; message: string } }>, label)
       // After crop, clear pending crop and mode
       if (feat === 'crop') {

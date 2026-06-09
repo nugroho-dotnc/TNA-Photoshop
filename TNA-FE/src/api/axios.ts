@@ -2,7 +2,9 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000',
+  // baseURL kosong = pakai path relatif (/session/upload, /enhance/..., dll.)
+  // Vite proxy akan tangkap dan forward ke target di vite.config.ts.
+  baseURL: import.meta.env.VITE_API_URL ?? '',
   timeout: 30000,
 })
 

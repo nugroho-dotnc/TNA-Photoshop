@@ -11,5 +11,5 @@ MAX_HISTORY_STEPS = 20
 
 # ─── ML / Object Recognition ─────────────────────────────────────────────────
 CNN_MODEL_PATH   = os.path.join(os.path.dirname(__file__), "models", "cnn_model.h5")
-CNN_INPUT_SIZE   = (224, 224)          # (width, height) expected by the model
+CNN_INPUT_SIZE   = (128, 128)          # (width, height) expected by the model
 CNN_TARGET_CLASS = "animals"           # options: humans | animals | vehicles | objects

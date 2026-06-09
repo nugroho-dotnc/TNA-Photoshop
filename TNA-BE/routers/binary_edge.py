@@ -20,6 +20,7 @@ router = APIRouter()
 
 
 def _std(session_id: str, step: int, msg: str = "Operation applied successfully.") -> dict:
+    """Membentuk response standar setelah operasi citra biner dan deteksi tepi."""
     return {
         "success": True,
         "session_id": session_id,
@@ -38,6 +39,7 @@ class ThresholdBody(BaseModel):
     @field_validator("value")
     @classmethod
     def validate_value(cls, v: int) -> int:
+        """Memvalidasi ambang intensitas untuk proses binarisasi citra."""
         if not 0 <= v <= 255:
             raise ValueError("value must be between 0 and 255.")
         return v
@@ -45,6 +47,10 @@ class ThresholdBody(BaseModel):
 
 @router.post("/binary-edge/{session_id}/threshold")
 def threshold(session_id: str, body: ThresholdBody):
+    """
+    Mengubah citra grayscale menjadi citra biner menggunakan teknik thresholding.
+    Mode yang didukung mencakup ambang tetap, inverse, Otsu, dan adaptive threshold.
+    """
     try:
         img = ss.read_current(session_id)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -95,11 +101,13 @@ class EdgeDetectionBody(BaseModel):
 
 
 def _edge_canny(gray, t1, t2):
+    """Mendeteksi tepi dengan Canny melalui smoothing, gradien, dan hysteresis threshold."""
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     return cv2.Canny(blurred, t1, t2)
 
 
 def _edge_sobel(gray, ksize):
+    """Mendeteksi tepi menggunakan operator Sobel berbasis gradien arah x dan y."""
     ksize = ksize if ksize % 2 == 1 else ksize + 1
     gx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=ksize)
     gy = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=ksize)
@@ -107,6 +115,7 @@ def _edge_sobel(gray, ksize):
 
 
 def _edge_prewitt(gray):
+    """Mendeteksi tepi menggunakan operator Prewitt untuk estimasi gradien lokal."""
     kx = np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]], dtype=np.float64)
     ky = np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]], dtype=np.float64)
     gray_float = gray.astype(np.float64)
@@ -116,6 +125,7 @@ def _edge_prewitt(gray):
 
 
 def _edge_robert(gray):
+    """Mendeteksi tepi menggunakan operator Robert dengan kernel diagonal kecil."""
     kx = np.array([[1, 0], [0, -1]], dtype=np.float64)
     ky = np.array([[0, 1], [-1, 0]], dtype=np.float64)
     gray_float = gray.astype(np.float64)
@@ -125,12 +135,14 @@ def _edge_robert(gray):
 
 
 def _edge_laplacian(gray, ksize):
+    """Mendeteksi tepi menggunakan operator Laplacian berbasis turunan orde dua."""
     ksize = ksize if ksize % 2 == 1 else ksize + 1
     lap = cv2.Laplacian(gray, cv2.CV_64F, ksize=ksize)
     return np.uint8(np.clip(np.abs(lap), 0, 255))
 
 
 def _edge_log(gray, sigma):
+    """Mendeteksi tepi menggunakan Laplacian of Gaussian setelah smoothing Gaussian."""
     ksize = int(2 * np.ceil(3 * sigma) + 1)
     if ksize % 2 == 0:
         ksize += 1
@@ -142,6 +154,10 @@ def _edge_log(gray, sigma):
 
 @router.post("/binary-edge/{session_id}/edge-detection")
 def edge_detection(session_id: str, body: EdgeDetectionBody):
+    """
+    Menerapkan deteksi tepi pada citra grayscale menggunakan operator yang dipilih.
+    Hasil tepi dikonversi kembali ke tiga kanal agar konsisten dengan pipeline citra.
+    """
     try:
         img = ss.read_current(session_id)
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
@@ -186,6 +202,7 @@ class MorphologyBody(BaseModel):
     @field_validator("kernel_size")
     @classmethod
     def validate_kernel(cls, v: int) -> int:
+        """Memvalidasi ukuran structuring element untuk operasi morfologi."""
         if v < 1:
             raise ValueError("kernel_size must be at least 1.")
         return v
@@ -193,6 +210,7 @@ class MorphologyBody(BaseModel):
     @field_validator("iterations")
     @classmethod
     def validate_iter(cls, v: int) -> int:
+        """Memvalidasi jumlah iterasi penerapan operasi morfologi."""
         if v < 1:
             raise ValueError("iterations must be at least 1.")
         return v
@@ -200,6 +218,10 @@ class MorphologyBody(BaseModel):
 
 @router.post("/binary-edge/{session_id}/morphology")
 def morphology(session_id: str, body: MorphologyBody):
+    """
+    Menerapkan operasi morfologi erosion atau dilation pada citra.
+    Erosion mengikis area foreground, sedangkan dilation memperluas area foreground.
+    """
     try:
         img = ss.read_current(session_id)
         kernel = cv2.getStructuringElement(

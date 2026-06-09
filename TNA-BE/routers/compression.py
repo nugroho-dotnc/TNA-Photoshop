@@ -20,6 +20,7 @@ router = APIRouter()
 
 
 def _std(session_id: str, step: int, msg: str = "Operation applied successfully.", **extra) -> dict:
+    """Membentuk response standar setelah operasi kompresi citra."""
     return {
         "success": True,
         "session_id": session_id,
@@ -39,6 +40,7 @@ class SaveQualityBody(BaseModel):
     @field_validator("quality")
     @classmethod
     def validate_quality(cls, v: int) -> int:
+        """Memvalidasi parameter kualitas yang memengaruhi rasio kompresi citra."""
         if not 1 <= v <= 100:
             raise ValueError("quality must be between 1 and 100.")
         return v
@@ -46,6 +48,10 @@ class SaveQualityBody(BaseModel):
 
 @router.post("/compression/{session_id}/save-quality")
 def save_quality(session_id: str, body: SaveQualityBody):
+    """
+    Menyimulasikan penyimpanan citra dengan kualitas kompresi tertentu.
+    Ukuran file sebelum dan sesudah kompresi dihitung untuk menganalisis rasio kompresi.
+    """
     try:
         img = ss.read_current(session_id)
 
@@ -97,6 +103,7 @@ class SimulateJpegBody(BaseModel):
     @field_validator("quality")
     @classmethod
     def validate_quality(cls, v: int) -> int:
+        """Memvalidasi parameter kualitas JPEG untuk simulasi artefak kompresi."""
         if not 1 <= v <= 100:
             raise ValueError("quality must be between 1 and 100.")
         return v
@@ -104,7 +111,10 @@ class SimulateJpegBody(BaseModel):
 
 @router.post("/compression/{session_id}/simulate-jpeg")
 def simulate_jpeg(session_id: str, body: SimulateJpegBody):
-    """Simulate JPEG compression artifacts via encode→decode round-trip."""
+    """
+    Mensimulasikan artefak kompresi JPEG melalui proses encode-decode.
+    Proses ini memperlihatkan dampak penurunan kualitas terhadap detail visual citra.
+    """
     try:
         img = ss.read_current(session_id)
 

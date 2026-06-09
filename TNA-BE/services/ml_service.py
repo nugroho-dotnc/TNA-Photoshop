@@ -23,11 +23,9 @@ _class_names: List[str] = []
 
 
 def load_model() -> None:
-    """Load the CNN model from disk (called once at startup).
-
-    Falls back gracefully if TensorFlow is unavailable or the model file
-    does not exist — inference will return an error message instead of
-    crashing the server.
+    """
+    Memuat model Convolutional Neural Network untuk pengenalan objek citra.
+    Model digunakan sebagai pendekatan pembelajaran mendalam dalam klasifikasi visual.
     """
     global _model, _class_names
 
@@ -70,17 +68,10 @@ def load_model() -> None:
 # ─── Inference ────────────────────────────────────────────────────────────────
 
 def predict(img_bgr: np.ndarray) -> Dict[str, Any]:
-    """Run inference on a BGR image and return top-5 prediction results.
-
-    Args:
-        img_bgr: OpenCV BGR NumPy array.
-
-    Returns:
-        Dict with ``predictions`` (list, sorted by confidence desc) and
-        ``top_prediction`` (string label).
-
-    Raises:
-        RuntimeError: If the model has not been loaded.
+    """
+    Melakukan inferensi CNN terhadap citra masukan untuk memperoleh kelas prediksi.
+    Tahapan pra-pemrosesan meliputi resize, konversi BGR ke RGB, normalisasi piksel,
+    dan pembentukan batch sebelum citra diproses oleh model klasifikasi.
     """
     if _model is None:
         raise RuntimeError(

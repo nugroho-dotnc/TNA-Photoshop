@@ -42,6 +42,11 @@ export default function HistogramTab() {
     }
   }
 
+  // PENJELASAN ARSITEKTUR: EFEK DARI TAHAP 3 (Reaksi Berantai Histogram)
+  // Komponen ini secara diam-diam memantau variabel state.currentUrl.
+  // Kapanpun useApply() merubah currentUrl, fungsi useEffect ini TERPICU otomatis.
+  // Hasilnya, browser mengirim HTTP GET request ke Backend (/histogram/current) 
+  // untuk menggambar ulang grafik warna.
   useEffect(() => { load() }, [state.sessionId, state.currentUrl, mode])
 
   return (

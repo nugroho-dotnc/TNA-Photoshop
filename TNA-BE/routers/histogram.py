@@ -17,7 +17,10 @@ router = APIRouter()
 
 
 def _calc_histograms(img: np.ndarray) -> dict:
-    """Return grayscale + RGB histogram arrays (256 values each)."""
+    """
+    Menghitung distribusi intensitas citra dalam histogram grayscale dan kanal RGB.
+    Statistik mean, standar deviasi, minimum, dan maksimum digunakan untuk analisis kontras.
+    """
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     grayscale = cv2.calcHist([gray], [0], None, [256], [0, 256]).flatten().astype(int).tolist()
 
@@ -44,7 +47,7 @@ def _calc_histograms(img: np.ndarray) -> dict:
 
 @router.get("/histogram/{session_id}/current")
 def histogram_current(session_id: str):
-    """Return histogram data for the current working image."""
+    """Mengembalikan histogram citra current sebagai dasar analisis distribusi intensitas."""
     try:
         img = ss.read_current(session_id)
         return _calc_histograms(img)
@@ -56,7 +59,7 @@ def histogram_current(session_id: str):
 
 @router.get("/histogram/{session_id}/compare")
 def histogram_compare(session_id: str):
-    """Return histogram data for both original and current image."""
+    """Membandingkan histogram citra original dan current untuk mengevaluasi perubahan intensitas."""
     try:
         ss.assert_session(session_id)
         orig_img = read_image(ss.original_path(session_id))

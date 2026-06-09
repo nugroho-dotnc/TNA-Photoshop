@@ -4,7 +4,7 @@ import { useSession } from '../../context/SessionContext'
 import { bustCache } from '../../utils/imageHelpers'
 import CropOverlay from './CropOverlay'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE = import.meta.env.VITE_API_URL ?? ''
 
 export default function FreeCanvas() {
   const { state, dispatch } = useSession()
@@ -117,6 +117,12 @@ export default function FreeCanvas() {
     >
       {displayUrl ? (
         <>
+          {/* PENJELASAN ARSITEKTUR: EFEK DARI TAHAP 3 */}
+          {/* Karena displayUrl bergantung pada state.currentUrl, maka setiap kali useApply() */}
+          {/* mengubah nilai state.currentUrl (karena timestamp bustCache berubah), komponen */}
+          {/* tag <img> ini akan ter-render ulang. Browser mendeteksi adanya 'src' yang baru, */}
+          {/* sehingga browser secara OTOMATIS melakukan HTTP GET request ke Backend tanpa */}
+          {/* perlu disuruh menggunakan Fetch/Axios. */}
           <img
             ref={imgRef}
             src={displayUrl}

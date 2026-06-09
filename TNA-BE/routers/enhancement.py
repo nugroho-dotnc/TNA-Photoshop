@@ -22,6 +22,7 @@ router = APIRouter()
 # ─── Helpers ──────────────────────────────────────────────────────────────────
 
 def _std(session_id: str, step: int, message: str = "Operation applied successfully.") -> dict:
+    """Membentuk response standar setelah operasi peningkatan kualitas citra."""
     return {
         "success": True,
         "session_id": session_id,
@@ -32,6 +33,7 @@ def _std(session_id: str, step: int, message: str = "Operation applied successfu
 
 
 def _handle(session_id: str, img: np.ndarray, label: str, params: dict, msg: str) -> dict:
+    """Menyimpan citra hasil enhancement beserta parameter operasinya."""
     step = ss.save_step(session_id, img, label, params)
     return _std(session_id, step, msg)
 
@@ -44,6 +46,7 @@ class BrightnessBody(BaseModel):
     @field_validator("value")
     @classmethod
     def validate_value(cls, v: int) -> int:
+        """Memvalidasi konstanta penambahan intensitas piksel untuk brightness."""
         if not -100 <= v <= 100:
             raise ValueError("value must be between -100 and 100.")
         return v
@@ -51,6 +54,10 @@ class BrightnessBody(BaseModel):
 
 @router.post("/enhance/{session_id}/brightness")
 def brightness(session_id: str, body: BrightnessBody):
+    """
+    Mengatur kecerahan citra dengan operasi titik pada nilai intensitas piksel.
+    Setiap piksel ditambah konstanta tertentu, lalu dibatasi pada rentang 0 sampai 255.
+    """
     try:
         img = ss.read_current(session_id)
         result = np.clip(img.astype(np.int32) + body.value, 0, 255).astype(np.uint8)
@@ -75,6 +82,7 @@ class ContrastBody(BaseModel):
     @field_validator("value")
     @classmethod
     def validate_value(cls, v: float) -> float:
+        """Memvalidasi faktor pengali intensitas piksel untuk pengaturan kontras."""
         if not 0.1 <= v <= 3.0:
             raise ValueError("value must be between 0.1 and 3.0.")
         return v
@@ -82,6 +90,10 @@ class ContrastBody(BaseModel):
 
 @router.post("/enhance/{session_id}/contrast")
 def contrast(session_id: str, body: ContrastBody):
+    """
+    Mengatur kontras citra menggunakan transformasi linear intensitas piksel.
+    Nilai piksel dikalikan faktor skala untuk memperbesar atau memperkecil sebaran intensitas.
+    """
     try:
         img = ss.read_current(session_id)
         result = np.clip(img.astype(np.float32) * body.value, 0, 255).astype(np.uint8)
@@ -102,6 +114,10 @@ def contrast(session_id: str, body: ContrastBody):
 
 @router.post("/enhance/{session_id}/histogram-equalization")
 def histogram_equalization(session_id: str):
+    """
+    Meningkatkan distribusi intensitas citra menggunakan histogram equalization.
+    Pada citra berwarna, peningkatan dilakukan pada kanal luminance di ruang warna LAB.
+    """
     try:
         img = ss.read_current(session_id)
 
@@ -137,6 +153,7 @@ class SharpenBody(BaseModel):
     @field_validator("intensity")
     @classmethod
     def validate_intensity(cls, v: float) -> float:
+        """Memvalidasi koefisien kernel untuk proses penajaman citra."""
         if not 0.1 <= v <= 3.0:
             raise ValueError("intensity must be between 0.1 and 3.0.")
         return v
@@ -144,6 +161,10 @@ class SharpenBody(BaseModel):
 
 @router.post("/enhance/{session_id}/sharpen")
 def sharpen(session_id: str, body: SharpenBody):
+    """
+    Menajamkan citra menggunakan operasi konvolusi dengan kernel high-pass.
+    Proses ini memperkuat komponen tepi dan detail frekuensi tinggi pada citra.
+    """
     try:
         img = ss.read_current(session_id)
         kernel = np.array(
@@ -177,6 +198,7 @@ class SmoothBody(BaseModel):
     @field_validator("kernel_size")
     @classmethod
     def validate_kernel(cls, v: int) -> int:
+        """Memvalidasi ukuran kernel Gaussian untuk proses smoothing."""
         allowed = {3, 5, 7, 9, 11}
         if v not in allowed:
             raise ValueError(f"kernel_size must be one of {allowed}.")
@@ -185,6 +207,10 @@ class SmoothBody(BaseModel):
 
 @router.post("/enhance/{session_id}/smooth")
 def smooth(session_id: str, body: SmoothBody):
+    """
+    Menghaluskan citra menggunakan Gaussian blur sebagai filter low-pass.
+    Operasi ini mereduksi noise dan detail halus melalui konvolusi kernel Gaussian.
+    """
     try:
         img = ss.read_current(session_id)
         result = cv2.GaussianBlur(img, (body.kernel_size, body.kernel_size), 0)

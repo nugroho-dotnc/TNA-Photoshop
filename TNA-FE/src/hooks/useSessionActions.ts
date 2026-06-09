@@ -5,7 +5,7 @@ import { useLog } from '../context/LogContext'
 import * as sessionApi from '../api/sessionApi'
 import { bustCache } from '../utils/imageHelpers'
 
-const BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+const BASE = import.meta.env.VITE_API_URL ?? ''
 
 export function useSessionActions() {
   const { state, dispatch } = useSession()
