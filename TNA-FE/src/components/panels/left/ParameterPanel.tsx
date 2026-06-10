@@ -26,6 +26,7 @@ import EdgeSegParams from './params/EdgeSegParams'
 import RegionSegParams from './params/RegionSegParams'
 import SaveQualityParams from './params/SaveQualityParams'
 import SimulateJpegParams from './params/SimulateJpegParams'
+import CompressionDemoParams from './params/CompressionDemoParams'
 
 const COMPONENT_MAP: Record<string, React.ForwardRefExoticComponent<React.RefAttributes<ParamHandle>>> = {
   'brightness': BrightnessParams,
@@ -51,6 +52,7 @@ const COMPONENT_MAP: Record<string, React.ForwardRefExoticComponent<React.RefAtt
   'seg-region': RegionSegParams,
   'compression-quality': SaveQualityParams,
   'compression-jpeg': SimulateJpegParams,
+  'compression-demo': CompressionDemoParams,
 }
 
 export interface ParameterPanelHandle {

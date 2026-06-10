@@ -6,3 +6,6 @@ export const applySaveQuality = (sessionId: string, quality: number, format: str
 
 export const applySimulateJpeg = (sessionId: string, quality: number) =>
   api.post(`/compression/${sessionId}/simulate-jpeg`, { quality })
+
+export const applyDemoAlgorithm = (sessionId: string, algorithm: string, levels: number = 16) =>
+  api.post(`/compression/${sessionId}/demo-algorithm`, { algorithm, levels })

@@ -148,3 +148,58 @@ def simulate_jpeg(session_id: str, body: SimulateJpegBody):
         raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+# ─── Demo Algoritma Kompresi ───────────────────────────────────────────────────
+
+from services.compression_demo import run_rle, run_huffman, run_lzw, run_arithmetic, run_quantization
+
+class DemoAlgorithmBody(BaseModel):
+    algorithm: Literal["rle", "huffman", "lzw", "arithmetic", "quantization"]
+    levels: int = 16  # Only used for quantization
+
+@router.post("/compression/{session_id}/demo-algorithm")
+def demo_algorithm(session_id: str, body: DemoAlgorithmBody):
+    """
+    Menjalankan algoritma kompresi sejati untuk tujuan demonstrasi.
+    """
+    try:
+        img = ss.read_current(session_id)
+        
+        if body.algorithm == "quantization":
+            # Quantization changes the image
+            quantized = run_quantization(img, body.levels)
+            step = ss.save_step(
+                session_id,
+                quantized,
+                "Quantization Demo",
+                {"levels": body.levels}
+            )
+            return _std(
+                session_id,
+                step,
+                f"Quantization applied with {body.levels} levels.",
+                algorithm="Quantization",
+                levels=body.levels
+            )
+            
+        # For lossless algorithms, they do not alter the image, they return metrics
+        if body.algorithm == "rle":
+            metrics = run_rle(img)
+        elif body.algorithm == "huffman":
+            metrics = run_huffman(img)
+        elif body.algorithm == "lzw":
+            metrics = run_lzw(img)
+        elif body.algorithm == "arithmetic":
+            metrics = run_arithmetic(img)
+            
+        return {
+            "success": True,
+            "session_id": session_id,
+            "message": f"Simulated {metrics['algorithm']} compression.",
+            "metrics": metrics
+        }
+        
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Session '{session_id}' not found.")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))

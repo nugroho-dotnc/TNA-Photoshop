@@ -38,6 +38,7 @@ const FEATURE_LABELS: Record<string, string> = {
   'seg-region': 'Region Segmentation',
   'compression-quality': 'Save Quality',
   'compression-jpeg': 'Simulate JPEG',
+  'compression-demo': 'Demo Algorithm',
 }
 
 export default function LeftPanel() {
@@ -113,17 +114,19 @@ export default function LeftPanel() {
       </div>
 
       {/* Apply button */}
-      <div className="p-3 border-t border-surface-4 flex-shrink-0">
-        <button
-          onClick={handleApply}
-          disabled={!state.activeFeature || state.isLoading}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          id="apply-btn"
-        >
-          {state.isLoading ? <Spinner size="sm" /> : null}
-          {state.isLoading ? 'Processing…' : 'Apply'}
-        </button>
-      </div>
+      {state.activeFeature !== 'compression-demo' && (
+        <div className="p-3 border-t border-surface-4 flex-shrink-0">
+          <button
+            onClick={handleApply}
+            disabled={!state.activeFeature || state.isLoading}
+            className="w-full flex items-center justify-center gap-2 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            id="apply-btn"
+          >
+            {state.isLoading ? <Spinner size="sm" /> : null}
+            {state.isLoading ? 'Processing…' : 'Apply'}
+          </button>
+        </div>
+      )}
     </div>
   )
 }

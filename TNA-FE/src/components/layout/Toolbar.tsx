@@ -17,7 +17,7 @@ const FEATURE_GROUPS: Record<string, string[]> = {
   Filter: ['gaussian-blur', 'median-filter', 'noise-removal', 'threshold', 'edge-detection', 'morphology'],
   Color: ['grayscale', 'hue-saturation'],
   Segment: ['seg-threshold', 'seg-edge', 'seg-region'],
-  Compress: ['compression-quality', 'compression-jpeg'],
+  Compress: ['compression-quality', 'compression-jpeg', 'compression-demo'],
   ML: [],
 }
 
@@ -45,6 +45,7 @@ const FEATURE_LABELS: Record<string, string> = {
   'seg-region': 'Region',
   'compression-quality': 'Save Quality',
   'compression-jpeg': 'Simulate JPEG',
+  'compression-demo': 'Demo Algorithm',
 }
 
 const GROUP_ICONS: Record<string, React.ReactNode> = {
